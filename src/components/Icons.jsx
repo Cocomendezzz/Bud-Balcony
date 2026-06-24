@@ -1,0 +1,35 @@
+// Lightweight inline icons. stroke=currentColor so they inherit color.
+const base = {
+  width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none',
+  stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round',
+}
+
+export const Icon = {
+  dashboard: (p) => (<svg {...base} {...p}><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>),
+  sprout: (p) => (<svg {...base} {...p}><path d="M12 21V11" /><path d="M12 11c0-3 2-5 5-5 0 3-2 5-5 5Z" /><path d="M12 13c0-2.5-2-4.5-5-4.5 0 2.5 2 4.5 5 4.5Z" /></svg>),
+  leaf: (p) => (<svg {...base} {...p}><path d="M11 20A7 7 0 0 1 4 13c0-4 3-8 9-9 1 6-1 10-4 12" /><path d="M4 21c2-3 5-5 8-6" /></svg>),
+  calendar: (p) => (<svg {...base} {...p}><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /></svg>),
+  film: (p) => (<svg {...base} {...p}><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M7 3v18M17 3v18M3 8h4M17 8h4M3 16h4M17 16h4" /></svg>),
+  bulb: (p) => (<svg {...base} {...p}><path d="M9 18h6M10 21h4" /><path d="M12 3a6 6 0 0 0-4 10.5c.8.7 1 1.2 1 2.5h6c0-1.3.2-1.8 1-2.5A6 6 0 0 0 12 3Z" /></svg>),
+  flag: (p) => (<svg {...base} {...p}><path d="M5 21V4M5 4c3-1.5 6 1.5 9 0s5 0 5 0v9s-2 1.5-5 0-6-1.5-9 0" /></svg>),
+  stories: (p) => (<svg {...base} {...p}><circle cx="12" cy="12" r="9" strokeDasharray="3 3" /><circle cx="12" cy="12" r="4" /></svg>),
+  settings: (p) => (<svg {...base} {...p}><circle cx="12" cy="12" r="3" /><path d="M19.4 13a7.8 7.8 0 0 0 0-2l1.6-1.3-1.6-2.8-2 .6a7.6 7.6 0 0 0-1.7-1l-.3-2H9.6l-.3 2a7.6 7.6 0 0 0-1.7 1l-2-.6L4 9.7 5.6 11a7.8 7.8 0 0 0 0 2L4 14.3l1.6 2.8 2-.6a7.6 7.6 0 0 0 1.7 1l.3 2h3.8l.3-2a7.6 7.6 0 0 0 1.7-1l2 .6 1.6-2.8Z" /></svg>),
+  plus: (p) => (<svg {...base} {...p}><path d="M12 5v14M5 12h14" /></svg>),
+  x: (p) => (<svg {...base} {...p}><path d="M18 6 6 18M6 6l12 12" /></svg>),
+  edit: (p) => (<svg {...base} {...p}><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>),
+  trash: (p) => (<svg {...base} {...p}><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" /></svg>),
+  check: (p) => (<svg {...base} {...p}><path d="M20 6 9 17l-5-5" /></svg>),
+  download: (p) => (<svg {...base} {...p}><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>),
+  upload: (p) => (<svg {...base} {...p}><path d="M12 15V3m0 0 4 4m-4-4-4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>),
+  copy: (p) => (<svg {...base} {...p}><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h8" /></svg>),
+  chevron: (p) => (<svg {...base} {...p}><path d="m6 9 6 6 6-6" /></svg>),
+  left: (p) => (<svg {...base} {...p}><path d="m15 18-6-6 6-6" /></svg>),
+  right: (p) => (<svg {...base} {...p}><path d="m9 18 6-6-6-6" /></svg>),
+  drop: (p) => (<svg {...base} {...p}><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z" /></svg>),
+  menu: (p) => (<svg {...base} {...p}><path d="M3 6h18M3 12h18M3 18h18" /></svg>),
+  heart: (p) => (<svg {...base} {...p}><path d="M12 20s-7-4.5-9-9a4.5 4.5 0 0 1 9-2 4.5 4.5 0 0 1 9 2c-2 4.5-9 9-9 9Z" /></svg>),
+  bookmark: (p) => (<svg {...base} {...p}><path d="M6 3h12v18l-6-4-6 4Z" /></svg>),
+  share: (p) => (<svg {...base} {...p}><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" /></svg>),
+  eye: (p) => (<svg {...base} {...p}><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>),
+  users: (p) => (<svg {...base} {...p}><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0" /><path d="M16 5a3.5 3.5 0 0 1 0 7M22 20a6.5 6.5 0 0 0-5-6.3" /></svg>),
+}
