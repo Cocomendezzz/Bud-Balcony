@@ -3,7 +3,8 @@ import { useStore } from '../store/ProjectContext.jsx'
 import { Icon } from '../components/Icons.jsx'
 import { Modal, Field } from '../components/Modal.jsx'
 import { GROW_STAGES } from '../store/defaults.js'
-import { todayISO, growDay, fmtShort } from '../lib/date.js'
+import { todayISO, growDay, fmtShort, fmtLong } from '../lib/date.js'
+import { convertedLabel } from '../lib/units.js'
 import { colorFor } from '../lib/color.js'
 import { uid } from '../lib/id.js'
 
@@ -18,10 +19,7 @@ export default function GrowLog() {
   const blank = () => ({ date: todayISO(), plantId: plants[0]?.id || 'all', stage: 'seedling', height: '', watered: false, fed: false, notes: '' })
   const [form, setForm] = useState(blank())
 
-  const open = (entry) => {
-    if (entry) { setForm({ ...entry }); setEditing(entry) }
-    else { setForm(blank()); setEditing('new') }
-  }
+  const open = (entry) => { if (entry) { setForm({ ...entry }); setEditing(entry) } else { setForm(blank()); setEditing('new') } }
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
   const save = () => {
     const payload = { ...form, height: form.height === '' ? '' : Number(form.height) }
@@ -36,7 +34,8 @@ export default function GrowLog() {
     return list.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
   }, [project.growLog, filter])
 
-  const plantName = (id) => (id === 'all' ? 'All plants' : (plants.find((p) => p.id === id)?.name || 'Unknown'))
+  const plantName = (id) => (id === 'all' ? 'All plants' : (plants.find((p) => p.strain && p.id === id)?.strain || 'Unknown'))
+  const plantColor = (id) => (id === 'all' ? 'var(--muted)' : (plants.find((p) => p.id === id)?.color || colorFor(id)))
 
   return (
     <div>
@@ -48,11 +47,9 @@ export default function GrowLog() {
         <button className="btn btn-leaf" onClick={() => open(null)} disabled={plants.length === 0}><Icon.plus width={16} /> Log entry</button>
       </div>
 
-      <div className="seg" style={{ marginBottom: 16 }}>
+      <div className="seg wrap" style={{ marginBottom: 16 }}>
         <button className={filter === 'all' ? 'on' : ''} onClick={() => setFilter('all')}>All</button>
-        {plants.map((p) => (
-          <button key={p.id} className={filter === p.id ? 'on' : ''} onClick={() => setFilter(p.id)}>{p.name}</button>
-        ))}
+        {plants.map((p) => <button key={p.id} className={filter === p.id ? 'on' : ''} onClick={() => setFilter(p.id)}>{p.strain}</button>)}
       </div>
 
       {plants.length === 0 ? (
@@ -60,46 +57,42 @@ export default function GrowLog() {
       ) : rows.length === 0 ? (
         <div className="empty"><h4>Nothing logged yet</h4><p>Start your first entry. Even "no growth, empty soil" is worth recording.</p></div>
       ) : (
-        <div className="card table-scroll">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Day</th><th>Date</th><th>Plant</th><th>Stage</th><th>Height</th><th>Care</th><th>Notes</th><th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((e) => {
-                const d = growDay(germ, e.date)
-                return (
-                  <tr key={e.id}>
-                    <td className="num"><strong>{d ? `D${d}` : '—'}</strong></td>
-                    <td className="num">{fmtShort(e.date)}</td>
-                    <td>
-                      <span className="row" style={{ alignItems: 'center', gap: 7 }}>
-                        <span className="dot" style={{ background: e.plantId === 'all' ? 'var(--muted)' : colorFor(plantName(e.plantId)) }} />
-                        {plantName(e.plantId)}
-                      </span>
-                    </td>
-                    <td><span className="chip">{e.stage}</span></td>
-                    <td className="num">{e.height !== '' && e.height != null ? `${e.height} ${unit}` : '—'}</td>
-                    <td>
-                      <span className="row" style={{ gap: 5 }}>
-                        {e.watered && <span title="Watered" style={{ color: 'var(--leaf)' }}><Icon.drop width={15} /></span>}
-                        {e.fed && <span className="chip chip-clay" style={{ padding: '1px 6px' }}>fed</span>}
-                      </span>
-                    </td>
-                    <td style={{ maxWidth: 280, color: 'var(--ink-soft)', fontSize: 13 }}>{e.notes}</td>
-                    <td>
-                      <span className="row" style={{ gap: 2 }}>
-                        <button className="icon-btn" onClick={() => open(e)} aria-label="Edit"><Icon.edit width={15} /></button>
-                        <button className="icon-btn" onClick={() => removeItem('growLog', e.id)} aria-label="Delete"><Icon.trash width={15} /></button>
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+        <div className="col" style={{ gap: 12 }}>
+          {rows.map((e) => {
+            const d = growDay(germ, e.date)
+            const conv = convertedLabel(e.height, unit)
+            return (
+              <div key={e.id} className="card entry-card">
+                <div className="entry-head">
+                  <div className="row" style={{ alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <span className="entry-day mono">{d ? `DAY ${d}` : 'DAY —'}</span>
+                    <span className="entry-sep">·</span>
+                    <span className="mono entry-date">{fmtShort(e.date).toUpperCase()}</span>
+                    <span className="entry-sep">·</span>
+                    <span className="row" style={{ alignItems: 'center', gap: 6 }}>
+                      <span className="dot" style={{ background: plantColor(e.plantId) }} />
+                      <strong style={{ letterSpacing: '0.01em' }}>{plantName(e.plantId).toUpperCase()}</strong>
+                    </span>
+                  </div>
+                  <div className="row" style={{ gap: 2 }}>
+                    <button className="icon-btn" onClick={() => open(e)} aria-label="Edit"><Icon.edit width={15} /></button>
+                    <button className="icon-btn" onClick={() => removeItem('growLog', e.id)} aria-label="Delete"><Icon.trash width={15} /></button>
+                  </div>
+                </div>
+
+                <div className="row wrap" style={{ gap: 8, margin: '10px 0' }}>
+                  <span className="chip">{e.stage}</span>
+                  {e.height !== '' && e.height != null && (
+                    <span className="chip chip-leaf">{e.height} {unit}{conv ? ` · ${conv}` : ''}</span>
+                  )}
+                  {e.watered && <span className="chip"><Icon.drop width={12} style={{ verticalAlign: '-1px' }} /> watered</span>}
+                  {e.fed && <span className="chip chip-clay">fed</span>}
+                </div>
+
+                {e.notes && <p className="entry-notes">{e.notes}</p>}
+              </div>
+            )
+          })}
         </div>
       )}
 
@@ -114,7 +107,7 @@ export default function GrowLog() {
             <Field label="Plant">
               <select className="select" value={form.plantId} onChange={(e) => set('plantId', e.target.value)}>
                 <option value="all">All plants</option>
-                {plants.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {plants.map((p) => <option key={p.id} value={p.id}>{p.strain}</option>)}
               </select>
             </Field>
             <Field label="Stage">
@@ -122,7 +115,10 @@ export default function GrowLog() {
                 {GROW_STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>
-            <Field label={`Height (${unit})`}><input type="number" step="0.1" className="input" value={form.height} onChange={(e) => set('height', e.target.value)} placeholder="0" /></Field>
+            <Field label={`Height (${unit})`}>
+              <input type="number" step="0.1" className="input" value={form.height} onChange={(e) => set('height', e.target.value)} placeholder="0" />
+              {form.height !== '' && <div style={{ fontSize: 12, color: 'var(--leaf)', marginTop: 6 }}>= {convertedLabel(form.height, unit)}</div>}
+            </Field>
             <div className="full row" style={{ gap: 18 }}>
               <label className="row" style={{ alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                 <span className={`check ${form.watered ? 'on' : ''}`} onClick={() => set('watered', !form.watered)}><Icon.check width={14} /></span> Watered
@@ -131,7 +127,7 @@ export default function GrowLog() {
                 <span className={`check ${form.fed ? 'on' : ''}`} onClick={() => set('fed', !form.fed)}><Icon.check width={14} /></span> Fed nutrients
               </label>
             </div>
-            <div className="full"><Field label="Notes"><textarea className="textarea" value={form.notes} onChange={(e) => set('notes', e.target.value)} placeholder="New node, leaf color, anything off." /></Field></div>
+            <div className="full"><Field label="Notes"><textarea className="textarea" style={{ minHeight: 90 }} value={form.notes} onChange={(e) => set('notes', e.target.value)} placeholder="New node, leaf color, anything off. Write as much as you want." /></Field></div>
           </div>
         </Modal>
       )}

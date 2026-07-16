@@ -416,3 +416,91 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ============ V2 additions ============ */
+
+/* Brand sprout */
+.brand-sprout { display: inline-flex; color: var(--leaf); }
+.brand .mark { font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+
+/* Drag affordances */
+.grip { color: var(--muted); cursor: grab; display: inline-flex; opacity: 0.55; }
+.grip:active { cursor: grabbing; }
+[draggable="true"] { -webkit-user-drag: element; }
+.dragging { opacity: 0.4; outline: 2px dashed var(--leaf); }
+
+/* Horizontal scroll wrapper for sheets */
+.table-scroll { overflow-x: auto; }
+
+/* Grow log entry cards */
+.entry-card { padding: 15px 17px; }
+.entry-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.entry-day { font-size: 14px; font-weight: 700; color: var(--leaf); letter-spacing: 0.03em; }
+.entry-date { font-size: 12.5px; color: var(--ink-soft); letter-spacing: 0.04em; }
+.entry-sep { color: var(--line-strong); }
+.entry-notes { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink-soft); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Inline spreadsheet cells */
+.sheet td { padding: 4px 6px; }
+.sheet th { white-space: nowrap; }
+.sheet tr:hover td { background: transparent; }
+.cell {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink);
+  border-radius: 5px;
+  padding: 6px 7px;
+  font-size: 13.5px;
+  font-family: inherit;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.cell:hover { background: var(--surface-2); }
+.cell:focus { outline: none; border-color: var(--leaf); background: var(--surface); box-shadow: 0 0 0 2px var(--leaf-wash); }
+.cell.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+select.cell { cursor: pointer; -webkit-appearance: none; appearance: none; }
+.status-cell { font-weight: 500; }
+.status-cell.idea, .status-cell.backlog { color: var(--muted); }
+.status-cell.filmed, .status-cell.planned { color: #6b7a4a; }
+.status-cell.editing, .status-cell.scheduled { color: var(--clay); }
+.status-cell.posted { color: var(--leaf); }
+
+/* Ideas board */
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(260px, 1fr); gap: 14px; overflow-x: auto; padding-bottom: 8px; align-items: start; }
+.board-col { background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; min-height: 120px; }
+.board-col .section-head { margin-bottom: 10px; }
+.board-col .section-head h3 { font-family: var(--serif); font-size: 15px; }
+.idea-card { padding: 12px 13px; cursor: grab; box-shadow: var(--shadow-sm); }
+.idea-card:active { cursor: grabbing; }
+.idea-card:hover { box-shadow: var(--shadow-md); }
+.drop-hint { border: 1.5px dashed var(--line-strong); border-radius: var(--r-sm); padding: 14px; text-align: center; font-size: 12px; color: var(--muted); }
+
+/* Progress rings */
+.ring-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 18px; }
+.ring-cell { display: flex; flex-direction: column; align-items: center; }
+
+/* Mini week strip */
+.week-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.week-day { border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); padding: 9px 7px; min-height: 96px; cursor: pointer; transition: border-color 0.14s ease, background 0.14s ease; }
+.week-day:hover { border-color: var(--line-strong); }
+.week-day.is-today { border-color: var(--leaf); background: var(--leaf-wash); }
+.week-dow { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.week-num { font-family: var(--serif); font-size: 20px; font-weight: 500; line-height: 1.1; }
+.week-grow { font-size: 9px; color: var(--leaf); letter-spacing: 0.04em; }
+.week-events { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.week-event { font-size: 10px; padding: 2px 5px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Calendar event gets a colored left bar (categories) */
+.cal-event { border-left: 2px solid var(--muted); }
+
+/* Danger button variant (used in Ideas modal) */
+.btn-danger.btn { border-color: #e3c4bf; color: var(--danger); background: var(--surface); }
+.btn-danger.btn:hover { background: #f7ecea; }
+
+@media (max-width: 860px) {
+  .week-strip { grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .week-day { min-height: 72px; padding: 6px 4px; }
+  .week-num { font-size: 15px; }
+  .week-event { font-size: 8px; }
+  .ring-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 12px; }
+}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useStore } from './store/ProjectContext.jsx'
+import { applyTheme } from './lib/theme.js'
 import Sidebar from './components/Sidebar.jsx'
 import { Icon } from './components/Icons.jsx'
 import Dashboard from './views/Dashboard.jsx'
@@ -10,6 +11,7 @@ import Content from './views/Content.jsx'
 import Ideas from './views/Ideas.jsx'
 import Stories from './views/Stories.jsx'
 import Milestones from './views/Milestones.jsx'
+import Production from './views/Production.jsx'
 import Settings from './views/Settings.jsx'
 
 const GROW_VIEWS = ['grow', 'plants', 'milestones']
@@ -20,7 +22,9 @@ export default function App() {
   const [navOpen, setNavOpen] = useState(false)
   const growOn = project?.settings?.modules?.grow !== false
 
-  // If grow module is off, never sit on a grow-only view.
+  // Apply the active project's theme whenever it changes.
+  useEffect(() => { applyTheme(project?.settings?.theme || {}) }, [project?.settings?.theme])
+
   useEffect(() => {
     if (!growOn && GROW_VIEWS.includes(view)) setView('dashboard')
   }, [growOn, view])
@@ -35,6 +39,7 @@ export default function App() {
       case 'ideas': return <Ideas />
       case 'stories': return <Stories />
       case 'milestones': return <Milestones />
+      case 'production': return <Production />
       case 'settings': return <Settings />
       default: return <Dashboard setView={setView} />
     }
@@ -46,7 +51,7 @@ export default function App() {
       <div className="main">
         <div className="mobile-bar">
           <button className="icon-btn" onClick={() => setNavOpen(true)} aria-label="Open menu"><Icon.menu /></button>
-          <span className="mark">Bud Balcony</span>
+          <span className="mark row" style={{ alignItems: 'center', gap: 7 }}><Icon.sprout width={18} style={{ color: 'var(--leaf)' }} /> Bud Balcony</span>
         </div>
         <div className="content">{render()}</div>
       </div>

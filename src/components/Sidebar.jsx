@@ -11,13 +11,13 @@ const NAV = [
   { id: 'ideas', label: 'Ideas', icon: 'bulb' },
   { id: 'stories', label: 'Stories', icon: 'stories' },
   { id: 'milestones', label: 'Milestones', icon: 'flag', grow: true },
+  { id: 'production', label: 'Production', icon: 'folder' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ]
 
 export default function Sidebar({ view, setView, open, onClose }) {
   const { project } = useStore()
   const growOn = project?.settings?.modules?.grow !== false
-
   const items = NAV.filter((n) => !n.grow || growOn)
 
   return (
@@ -25,8 +25,11 @@ export default function Sidebar({ view, setView, open, onClose }) {
       <div className={`scrim ${open ? 'show' : ''}`} onClick={onClose} />
       <aside className={`sidebar ${open ? 'open' : ''}`}>
         <div className="brand">
-          <div className="mark">Bud Balcony</div>
-          <div className="sub">Seed to Smoke</div>
+          <div className="mark row" style={{ alignItems: 'center', gap: 8 }}>
+            <span className="brand-sprout"><Icon.sprout width={20} /></span>
+            Bud Balcony
+          </div>
+          <div className="sub">{project?.settings?.seriesTitle || 'Seed to Smoke'}</div>
         </div>
 
         <nav className="nav">

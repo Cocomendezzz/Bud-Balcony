@@ -1,11 +1,17 @@
 // Local persistence. No server, no accounts. Portability is via JSON export/import.
+import { SCHEMA_VERSION, defaultCategories, defaultIdeaColumns, defaultTheme, strainInfoFor } from './defaults.js'
+
 const KEY = 'budbalcony.v1'
 
 export function loadState() {
   try {
     const raw = localStorage.getItem(KEY)
     if (!raw) return null
-    return JSON.parse(raw)
+    const state = JSON.parse(raw)
+    if (state && Array.isArray(state.projects)) {
+      state.projects = state.projects.map(migrateProject)
+    }
+    return state
   } catch (e) {
     console.error('Failed to load saved data:', e)
     return null
@@ -22,11 +28,58 @@ export function saveState(state) {
   }
 }
 
-// Export a single project to a downloadable .json file.
+// Upgrade older projects to the current schema without losing data.
+export function migrateProject(p) {
+  if (!p || typeof p !== 'object') return p
+  const s = p.settings || {}
+
+  // Settings additions
+  if (!s.categories) s.categories = defaultCategories()
+  if (!s.ideaColumns) s.ideaColumns = defaultIdeaColumns()
+  if (!s.theme) s.theme = defaultTheme()
+  delete s.tagline
+  p.settings = s
+
+  // Collections that may not exist on v1
+  if (!Array.isArray(p.equipment)) p.equipment = []
+  if (!Array.isArray(p.shoots)) p.shoots = []
+
+  // Plants: merge name/strain -> strain, add growType/color/info, drop soil/pot/notes
+  if (Array.isArray(p.plants)) {
+    p.plants = p.plants.map((pl) => {
+      if (pl.strain && pl.growType && pl.info) return pl // already v2
+      const strain = pl.strain || pl.name || 'Unknown'
+      const growType = pl.growType || pl.type || 'photoperiod'
+      const color = pl.color || '#3e6b4f'
+      const { soil, pot, notes, name, type, ...rest } = pl
+      return { ...rest, strain, growType, color, info: pl.info || strainInfoFor(strain), infoManual: pl.infoManual || false }
+    })
+  }
+
+  // Ideas: status -> columnId, add categoryId/gear/script
+  if (Array.isArray(p.ideas)) {
+    const map = { backlog: 'col_vault', planned: 'col_planned', posted: 'col_posted' }
+    p.ideas = p.ideas.map((i) => ({
+      ...i,
+      columnId: i.columnId || map[i.status] || 'col_vault',
+      categoryId: i.categoryId || null,
+      gear: i.gear || '',
+      script: i.script || '',
+    }))
+  }
+
+  // Posts, calendar: ensure categoryId + notes field exist
+  if (Array.isArray(p.posts)) p.posts = p.posts.map((x) => ({ ...x, categoryId: x.categoryId ?? null, notes: x.notes ?? '' }))
+  if (Array.isArray(p.calendar)) p.calendar = p.calendar.map((x) => ({ ...x, categoryId: x.categoryId ?? null }))
+
+  p.schemaVersion = SCHEMA_VERSION
+  return p
+}
+
 export function exportProject(project) {
   const payload = {
     kind: 'budbalcony-project',
-    schemaVersion: project.schemaVersion || 1,
+    schemaVersion: project.schemaVersion || SCHEMA_VERSION,
     exportedAt: new Date().toISOString(),
     project,
   }
@@ -42,10 +95,9 @@ export function exportProject(project) {
   URL.revokeObjectURL(url)
 }
 
-// Parse an imported file. Accepts either a wrapped export or a raw project.
 export function parseImported(text) {
   const data = JSON.parse(text)
-  if (data && data.kind === 'budbalcony-project' && data.project) return data.project
-  if (data && data.id && data.name && Array.isArray(data.plants)) return data
+  if (data && data.kind === 'budbalcony-project' && data.project) return migrateProject(data.project)
+  if (data && data.id && data.name && Array.isArray(data.plants)) return migrateProject(data)
   throw new Error('This file does not look like a Bud Balcony project.')
 }
