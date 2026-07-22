@@ -108,7 +108,7 @@ export default function Settings() {
                 <span className="field-label">Germination date (Day 1)</span>
                 <input type="date" className="input" value={s.germinationDate || ''} onChange={(e) => setSettings({ germinationDate: e.target.value || null })} />
                 <div style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 6 }}>
-                  {s.germinationDate ? `Today is grow day ${curDay}. Germination was ${fmtShort(s.germinationDate)}.` : 'Set this the day your first seed cracks. Every day count flows from it.'}
+                  {s.germinationDate ? `Today is grow day ${curDay}. Germination was ${fmtShort(s.germinationDate)}. This is the default Day 1 for the whole project; each plant can override it on the Plants page.` : 'Set this the day your first seed cracks. It anchors day counts across the app, and each plant can set its own start date too.'}
                 </div>
               </label>
               <label>

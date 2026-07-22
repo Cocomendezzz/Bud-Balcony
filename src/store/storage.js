@@ -48,12 +48,12 @@ export function migrateProject(p) {
   // Plants: merge name/strain -> strain, add growType/color/info, drop soil/pot/notes
   if (Array.isArray(p.plants)) {
     p.plants = p.plants.map((pl) => {
-      if (pl.strain && pl.growType && pl.info) return pl // already v2
+      if (pl.strain && pl.growType && pl.info) return { ...pl, germinationDate: pl.germinationDate || '' } // already v2/v3
       const strain = pl.strain || pl.name || 'Unknown'
       const growType = pl.growType || pl.type || 'photoperiod'
       const color = pl.color || '#3e6b4f'
       const { soil, pot, notes, name, type, ...rest } = pl
-      return { ...rest, strain, growType, color, info: pl.info || strainInfoFor(strain), infoManual: pl.infoManual || false }
+      return { ...rest, strain, growType, color, germinationDate: pl.germinationDate || '', info: pl.info || strainInfoFor(strain), infoManual: pl.infoManual || false }
     })
   }
 

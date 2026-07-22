@@ -108,26 +108,40 @@ export default function Dashboard({ setView }) {
             <h3>Strain progress</h3>
             <button className="btn btn-sm btn-ghost" onClick={() => setView('plants')}>Plants →</button>
           </div>
-          {!s.germinationDate ? (
-            <div className="empty" style={{ padding: 22, fontSize: 13 }}>Set a germination date to see predicted progress.</div>
-          ) : (
-            <div className="ring-grid">
-              {(project.plants || []).map((p) => {
-                const pred = predictPhase(p.growType, gd)
-                const stage = latestStage(p.id)
-                return (
-                  <div key={p.id} className="ring-cell">
-                    <ProgressRing value={pred.overall} color={p.color} track={tint(p.color, 0.78)}>
-                      <div className="mono" style={{ fontSize: 17, fontWeight: 600, color: p.color }}>{Math.round(pred.overall * 100)}%</div>
-                      <div style={{ fontSize: 9.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{pred.phase}</div>
-                    </ProgressRing>
-                    <div style={{ textAlign: 'center', marginTop: 8 }}>
-                      <div style={{ fontWeight: 500, fontSize: 13.5 }}>{p.strain}</div>
-                      <div style={{ fontSize: 11, color: 'var(--muted)' }}>{p.growType === 'autoflower' ? 'auto' : 'photo'}{stage ? ` · logged: ${stage}` : ''}</div>
+          <div className="ring-grid">
+            {(project.plants || []).map((p) => {
+              const eGerm = p.germinationDate || s.germinationDate
+              const pgd = growDay(eGerm, today)
+              const pred = predictPhase(p.growType, pgd)
+              const stage = latestStage(p.id)
+              const hasDate = !!eGerm
+              return (
+                <div key={p.id} className="ring-cell">
+                  <ProgressRing value={hasDate ? pred.overall : 0} color={p.color} track={tint(p.color, 0.78)}>
+                    {hasDate ? (
+                      <>
+                        <div className="mono" style={{ fontSize: 17, fontWeight: 600, color: p.color }}>{Math.round(pred.overall * 100)}%</div>
+                        <div style={{ fontSize: 9.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{pred.phase}</div>
+                      </>
+                    ) : (
+                      <div style={{ fontSize: 9.5, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.3, padding: '0 8px' }}>no start<br />date</div>
+                    )}
+                  </ProgressRing>
+                  <div style={{ textAlign: 'center', marginTop: 8 }}>
+                    <div style={{ fontWeight: 500, fontSize: 13.5 }}>{p.strain}</div>
+                    <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+                      {p.growType === 'autoflower' ? 'auto' : 'photo'}
+                      {hasDate && pgd != null ? ` · day ${pgd}` : ''}
+                      {stage ? ` · logged: ${stage}` : ''}
                     </div>
                   </div>
-                )
-              })}
+                </div>
+              )
+            })}
+          </div>
+          {!s.germinationDate && !(project.plants || []).some((p) => p.germinationDate) && (
+            <div style={{ marginTop: 14, fontSize: 12.5, color: 'var(--muted)' }}>
+              Add a start date to a plant (on the Plants page) or set the project germination date in Settings to see progress.
             </div>
           )}
         </div>

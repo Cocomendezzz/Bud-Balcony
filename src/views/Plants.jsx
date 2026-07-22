@@ -6,7 +6,7 @@ import { initials, SWATCHES, tint, readableOn } from '../lib/color.js'
 import { strainInfoFor, makePlant } from '../store/defaults.js'
 import { lookupStrain, strainNames } from '../lib/strains.js'
 import { predictPhase } from '../lib/growth.js'
-import { growDay, todayISO } from '../lib/date.js'
+import { growDay, todayISO, fmtShort } from '../lib/date.js'
 
 export default function Plants() {
   const { project, addItem, updateItem, removeItem, reorderCollection } = useStore()
@@ -15,7 +15,7 @@ export default function Plants() {
   const [editing, setEditing] = useState(null)
   const [dragId, setDragId] = useState(null)
 
-  const blank = () => ({ strain: '', growType: 'photoperiod', color: SWATCHES[0], info: strainInfoFor(''), infoManual: false })
+  const blank = () => ({ strain: '', growType: 'photoperiod', color: SWATCHES[0], germinationDate: '', info: strainInfoFor(''), infoManual: false })
   const [form, setForm] = useState(blank())
 
   const open = (plant) => {
@@ -42,7 +42,7 @@ export default function Plants() {
   const save = () => {
     if (!form.strain.trim()) return
     const { effectsText, flavorsText, ...clean } = form
-    if (editing === 'new') addItem('plants', { ...makePlant(clean.strain, clean.growType, clean.color), info: clean.info, infoManual: clean.infoManual })
+    if (editing === 'new') addItem('plants', { ...makePlant(clean.strain, clean.growType, clean.color, clean.germinationDate), info: clean.info, infoManual: clean.infoManual })
     else updateItem('plants', editing.id, clean)
     setEditing(null)
   }
@@ -70,7 +70,8 @@ export default function Plants() {
         <div className="plant-grid">
           {plants.map((p) => {
             const info = p.info || {}
-            const gd = growDay(germ, todayISO())
+            const eGerm = p.germinationDate || germ
+            const gd = growDay(eGerm, todayISO())
             const pred = predictPhase(p.growType, gd)
             return (
               <div key={p.id} className={`card plant-card ${dragId === p.id ? 'dragging' : ''}`}
@@ -141,6 +142,12 @@ export default function Plants() {
                 <option value="autoflower">Autoflower</option>
                 <option value="photoperiod">Photoperiod</option>
               </select>
+            </Field>
+            <Field label="Germinated / started">
+              <input type="date" className="input" value={form.germinationDate || ''} onChange={(e) => set('germinationDate', e.target.value)} />
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>
+                {form.germinationDate ? `This plant's Day 1. Drives its progress wheel.` : (germ ? `Blank = uses the project date (${fmtShort(germ)}).` : 'Set this plant\u2019s Day 1 to track its progress wheel.')}
+              </div>
             </Field>
             <Field label="Label color">
               <div className="row wrap" style={{ gap: 6 }}>

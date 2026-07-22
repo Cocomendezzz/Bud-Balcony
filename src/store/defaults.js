@@ -56,8 +56,8 @@ export function strainInfoFor(strain) {
   return { type: s.type, lean: s.lean, thc: s.thc, effects: s.effects, flavors: s.flavors, lineage: s.lineage, blurb: s.blurb, source: 'db' }
 }
 
-export function makePlant(strain, growType = 'photoperiod', color) {
-  return { id: uid('pl_'), strain, growType, color: color || '#3e6b4f', info: strainInfoFor(strain), infoManual: false }
+export function makePlant(strain, growType = 'photoperiod', color, germinationDate = '') {
+  return { id: uid('pl_'), strain, growType, color: color || '#3e6b4f', germinationDate: germinationDate || '', info: strainInfoFor(strain), infoManual: false }
 }
 
 export function blankProject(name = 'New Project') {
