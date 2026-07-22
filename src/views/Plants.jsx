@@ -5,7 +5,6 @@ import { Modal, Field } from '../components/Modal.jsx'
 import { initials, SWATCHES, tint, readableOn } from '../lib/color.js'
 import { strainInfoFor, makePlant } from '../store/defaults.js'
 import { lookupStrain, strainNames } from '../lib/strains.js'
-import { predictPhase } from '../lib/growth.js'
 import { growDay, todayISO, fmtShort } from '../lib/date.js'
 
 export default function Plants() {
@@ -48,6 +47,11 @@ export default function Plants() {
   }
 
   const logCount = (id) => (project.growLog || []).filter((e) => e.plantId === id).length
+  const latestStage = (id) => {
+    const entries = (project.growLog || []).filter((e) => e.plantId === id || e.plantId === 'all')
+    if (!entries.length) return null
+    return [...entries].sort((a, b) => (a.date < b.date ? 1 : -1))[0].stage
+  }
   const found = lookupStrain(form.strain)
 
   return (
@@ -72,7 +76,7 @@ export default function Plants() {
             const info = p.info || {}
             const eGerm = p.germinationDate || germ
             const gd = growDay(eGerm, todayISO())
-            const pred = predictPhase(p.growType, gd)
+            const stage = latestStage(p.id)
             return (
               <div key={p.id} className={`card plant-card ${dragId === p.id ? 'dragging' : ''}`}
                 draggable
@@ -113,7 +117,7 @@ export default function Plants() {
 
                 <div className="between" style={{ marginTop: 'auto', paddingTop: 6 }}>
                   <span className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{logCount(p.id)} log entries</span>
-                  {gd != null && <span className="mono" style={{ fontSize: 11, color: 'var(--leaf)' }}>predicted: {pred.phase}</span>}
+                  {stage ? <span className="mono" style={{ fontSize: 11, color: 'var(--leaf)' }}>stage: {stage}</span> : <span className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>no log yet</span>}
                 </div>
               </div>
             )

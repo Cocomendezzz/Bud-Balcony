@@ -7,7 +7,7 @@ import ProgressRing from '../components/ProgressRing.jsx'
 import { categoryById } from '../components/Category.jsx'
 import { PLATFORM_LABEL } from '../store/defaults.js'
 import { todayISO, toISO, fromISO, growDay, fmtShort, fmtLong, DOW } from '../lib/date.js'
-import { predictPhase } from '../lib/growth.js'
+import { progressFromLog } from '../lib/growth.js'
 import { colorFor, tint, readableOn } from '../lib/color.js'
 import { uid } from '../lib/id.js'
 
@@ -112,36 +112,35 @@ export default function Dashboard({ setView }) {
             {(project.plants || []).map((p) => {
               const eGerm = p.germinationDate || s.germinationDate
               const pgd = growDay(eGerm, today)
-              const pred = predictPhase(p.growType, pgd)
               const stage = latestStage(p.id)
-              const hasDate = !!eGerm
+              const prog = progressFromLog(stage, pgd)
+              const hasStage = prog.hasStage
               return (
                 <div key={p.id} className="ring-cell">
-                  <ProgressRing value={hasDate ? pred.overall : 0} color={p.color} track={tint(p.color, 0.78)}>
-                    {hasDate ? (
+                  <ProgressRing value={prog.overall} color={p.color} track={tint(p.color, 0.78)}>
+                    {hasStage ? (
                       <>
-                        <div className="mono" style={{ fontSize: 17, fontWeight: 600, color: p.color }}>{Math.round(pred.overall * 100)}%</div>
-                        <div style={{ fontSize: 9.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{pred.phase}</div>
+                        <div className="mono" style={{ fontSize: 17, fontWeight: 600, color: p.color }}>{Math.round(prog.overall * 100)}%</div>
+                        <div style={{ fontSize: 9.5, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{prog.phase}</div>
                       </>
                     ) : (
-                      <div style={{ fontSize: 9.5, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.3, padding: '0 8px' }}>no start<br />date</div>
+                      <div style={{ fontSize: 9.5, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.3, padding: '0 8px' }}>not logged<br />yet</div>
                     )}
                   </ProgressRing>
                   <div style={{ textAlign: 'center', marginTop: 8 }}>
                     <div style={{ fontWeight: 500, fontSize: 13.5 }}>{p.strain}</div>
                     <div style={{ fontSize: 11, color: 'var(--muted)' }}>
                       {p.growType === 'autoflower' ? 'auto' : 'photo'}
-                      {hasDate && pgd != null ? ` · day ${pgd}` : ''}
-                      {stage ? ` · logged: ${stage}` : ''}
+                      {pgd != null ? ` · day ${pgd}` : ''}
                     </div>
                   </div>
                 </div>
               )
             })}
           </div>
-          {!s.germinationDate && !(project.plants || []).some((p) => p.germinationDate) && (
+          {(project.growLog || []).length === 0 && (
             <div style={{ marginTop: 14, fontSize: 12.5, color: 'var(--muted)' }}>
-              Add a start date to a plant (on the Plants page) or set the project germination date in Settings to see progress.
+              The wheels follow your Grow Log. Log a stage for a plant and its wheel updates to match.
             </div>
           )}
         </div>
