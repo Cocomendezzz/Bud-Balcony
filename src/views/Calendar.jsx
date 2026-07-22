@@ -20,14 +20,22 @@ export default function Calendar() {
   const [month, setMonth] = useState(now.getMonth())
   const [dayOpen, setDayOpen] = useState(null)
   const [editing, setEditing] = useState(null)
-  const [dragId, setDragId] = useState(null)
+  const [drag, setDrag] = useState(null) // { id, kind: 'calendar' | 'post' }
 
-  const blank = (date) => ({ date, title: '', categoryId: categories[0]?.id || null, platform: platforms[0] || 'instagram', notes: '', done: false })
+  const blank = (date) => ({ date, title: '', categoryId: categories[0]?.id || null, platforms: [], notes: '', done: false })
   const [form, setForm] = useState(blank(today))
 
   const cells = monthGrid(year, month)
-  const events = project.calendar || []
-  const eventsOn = (iso) => events.filter((e) => e.date === iso)
+
+  // Everything with a date shows here: calendar entries plus posts from the Content sheet.
+  const eventsOn = (iso) => {
+    const own = (project.calendar || []).filter((e) => e.date === iso).map((e) => ({ ...e, kind: 'calendar' }))
+    const posts = (project.posts || []).filter((p) => p.date === iso).map((p) => ({
+      id: p.id, kind: 'post', date: p.date, title: p.hook || 'Untitled post',
+      categoryId: p.categoryId, platforms: p.platforms || [], notes: p.notes, done: p.status === 'posted', status: p.status,
+    }))
+    return [...own, ...posts]
+  }
   const catColor = (id) => categoryById(categories, id)?.color || 'var(--muted)'
 
   const prev = () => { if (month === 0) { setMonth(11); setYear((y) => y - 1) } else setMonth((m) => m - 1) }
@@ -37,20 +45,39 @@ export default function Calendar() {
   const openNew = (date) => { setForm(blank(date)); setEditing('new') }
   const openEdit = (ev) => { setForm({ ...ev }); setEditing(ev) }
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+  const togglePf = (p) => set('platforms', form.platforms.includes(p) ? form.platforms.filter((x) => x !== p) : [...form.platforms, p])
+  const allOn = platforms.length > 0 && platforms.every((p) => form.platforms.includes(p))
+  const toggleAll = () => set('platforms', allOn ? [] : [...platforms])
+
   const save = () => {
     if (!form.title.trim()) return
-    if (editing === 'new') addItem('calendar', { ...form, id: uid('c_') })
-    else updateItem('calendar', editing.id, form)
+    const { kind, ...payload } = form
+    if (editing === 'new') addItem('calendar', { ...payload, id: uid('c_') })
+    else updateItem('calendar', editing.id, payload)
     setEditing(null)
   }
 
-  const onDropDay = (iso) => { if (dragId) { updateItem('calendar', dragId, { date: iso }); setDragId(null) } }
+  const onDropDay = (iso) => {
+    if (!drag) return
+    if (drag.kind === 'post') {
+      const post = (project.posts || []).find((p) => p.id === drag.id)
+      if (post) updateItem('posts', drag.id, { date: iso, day: growDay(germ, iso) ?? post.day })
+    } else {
+      updateItem('calendar', drag.id, { date: iso })
+    }
+    setDrag(null)
+  }
+
+  const toggleDone = (ev) => {
+    if (ev.kind === 'post') updateItem('posts', ev.id, { status: ev.done ? 'scheduled' : 'posted' })
+    else updateItem('calendar', ev.id, { done: !ev.done })
+  }
 
   return (
     <div>
       <div className="page-head">
         <h1>Calendar</h1>
-        <div className="desc">Plan the whole run. Click a day to add, drag an entry to move it. Colors are your content categories.</div>
+        <div className="desc">Everything dated lands here automatically, including your Content posts. Drag anything to reschedule.</div>
       </div>
 
       <div className="cal-head">
@@ -80,13 +107,13 @@ export default function Calendar() {
                 {gd && gd > 0 && c.inMonth && <span className="cell-grow">D{gd}</span>}
               </div>
               {evs.slice(0, 4).map((e) => (
-                <span key={e.id} className={`cal-event ${e.done ? 'done' : ''}`}
+                <span key={`${e.kind}_${e.id}`} className={`cal-event ${e.done ? 'done' : ''}`}
                   draggable
-                  onDragStart={(ev) => { ev.stopPropagation(); setDragId(e.id) }}
-                  onDragEnd={() => setDragId(null)}
+                  onDragStart={(ev) => { ev.stopPropagation(); setDrag({ id: e.id, kind: e.kind }) }}
+                  onDragEnd={() => setDrag(null)}
                   onClick={(ev) => { ev.stopPropagation(); setDayOpen(e.date) }}
                   style={{ borderLeftColor: catColor(e.categoryId), background: tint(catColor(e.categoryId), 0.8) }}>
-                  {e.title}
+                  {e.kind === 'post' ? '▸ ' : ''}{e.title}
                 </span>
               ))}
               {evs.length > 4 && <span className="mono" style={{ fontSize: 9, color: 'var(--muted)' }}>+{evs.length - 4} more</span>}
@@ -95,12 +122,15 @@ export default function Calendar() {
         })}
       </div>
 
-      <div className="row wrap" style={{ gap: 14, marginTop: 14 }}>
-        {categories.map((c) => (
-          <span key={c.id} className="row" style={{ alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)' }}>
-            <span className="dot" style={{ background: c.color }} /> {c.label}
-          </span>
-        ))}
+      <div className="between wrap" style={{ marginTop: 14, gap: 10 }}>
+        <div className="row wrap" style={{ gap: 14 }}>
+          {categories.map((c) => (
+            <span key={c.id} className="row" style={{ alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)' }}>
+              <span className="dot" style={{ background: c.color }} /> {c.label}
+            </span>
+          ))}
+        </div>
+        <span className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>▸ = from the Content sheet</span>
       </div>
 
       {dayOpen && (
@@ -114,19 +144,22 @@ export default function Calendar() {
               {eventsOn(dayOpen).map((e) => {
                 const cat = categoryById(categories, e.categoryId)
                 return (
-                  <div key={e.id} className="row" style={{ alignItems: 'center', gap: 10, padding: 10, border: '1px solid var(--line)', borderRadius: 8, borderLeft: `3px solid ${catColor(e.categoryId)}` }}>
-                    <button className={`check ${e.done ? 'on' : ''}`} onClick={() => updateItem('calendar', e.id, { done: !e.done })}><Icon.check width={13} /></button>
+                  <div key={`${e.kind}_${e.id}`} className="row" style={{ alignItems: 'center', gap: 10, padding: 10, border: '1px solid var(--line)', borderRadius: 8, borderLeft: `3px solid ${catColor(e.categoryId)}` }}>
+                    <button className={`check ${e.done ? 'on' : ''}`} onClick={() => toggleDone(e)}><Icon.check width={13} /></button>
                     <span className="grow">
                       <div style={{ fontWeight: 500, textDecoration: e.done ? 'line-through' : 'none' }}>{e.title}</div>
                       <div className="row wrap" style={{ gap: 6, marginTop: 3 }}>
+                        {e.kind === 'post' && <span className="chip chip-clay" style={{ padding: '1px 7px' }}>Content · {e.status}</span>}
                         {cat && <span className="chip" style={{ padding: '1px 7px', color: cat.color, borderColor: tint(cat.color, 0.5) }}>{cat.label}</span>}
-                        {e.platform && <span className="chip" style={{ padding: '1px 7px' }}>{PLATFORM_LABEL[e.platform] || e.platform}</span>}
+                        {(e.platforms || []).map((p) => <span key={p} className="chip" style={{ padding: '1px 7px' }}>{PLATFORM_LABEL[p] || p}</span>)}
                       </div>
                       {e.notes && <div style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 4 }}>{e.notes}</div>}
                     </span>
                     <span className="row" style={{ gap: 2 }}>
-                      <button className="icon-btn" onClick={() => { setDayOpen(null); openEdit(e) }} aria-label="Edit"><Icon.edit width={15} /></button>
-                      <button className="icon-btn" onClick={() => removeItem('calendar', e.id)} aria-label="Delete"><Icon.trash width={15} /></button>
+                      {e.kind === 'calendar' && <>
+                        <button className="icon-btn" onClick={() => { setDayOpen(null); openEdit(e) }} aria-label="Edit"><Icon.edit width={15} /></button>
+                        <button className="icon-btn" onClick={() => removeItem('calendar', e.id)} aria-label="Delete"><Icon.trash width={15} /></button>
+                      </>}
                     </span>
                   </div>
                 )
@@ -146,12 +179,19 @@ export default function Calendar() {
           <div className="form-grid">
             <Field label="Date"><input type="date" className="input" value={form.date} onChange={(e) => set('date', e.target.value)} /></Field>
             <Field label="Category"><CategorySelect categories={categories} value={form.categoryId} onChange={(v) => set('categoryId', v)} allowNone={false} /></Field>
-            <Field label="Platform">
-              <select className="select" value={form.platform} onChange={(e) => set('platform', e.target.value)}>
-                <option value="">None</option>
-                {platforms.map((p) => <option key={p} value={p}>{PLATFORM_LABEL[p]}</option>)}
-              </select>
-            </Field>
+          </div>
+          <div style={{ display: 'block' }}>
+            <span className="field-label">Platforms</span>
+            <div className="row wrap" style={{ gap: 14 }}>
+              <span className="row" style={{ alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 13.5 }} onClick={toggleAll}>
+                <span className={`check ${allOn ? 'on' : ''}`}><Icon.check width={13} /></span> All
+              </span>
+              {platforms.map((p) => (
+                <span key={p} className="row" style={{ alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 13.5 }} onClick={() => togglePf(p)}>
+                  <span className={`check ${form.platforms.includes(p) ? 'on' : ''}`}><Icon.check width={13} /></span> {PLATFORM_LABEL[p]}
+                </span>
+              ))}
+            </div>
           </div>
           <Field label="Notes"><textarea className="textarea" value={form.notes} onChange={(e) => set('notes', e.target.value)} placeholder="Structure, hook, what changed." /></Field>
         </Modal>

@@ -1,5 +1,6 @@
 // Local persistence. No server, no accounts. Portability is via JSON export/import.
 import { SCHEMA_VERSION, defaultCategories, defaultIdeaColumns, defaultTheme, strainInfoFor } from './defaults.js'
+import { growDay } from '../lib/date.js'
 
 const KEY = 'budbalcony.v1'
 
@@ -71,6 +72,29 @@ export function migrateProject(p) {
   // Posts, calendar: ensure categoryId + notes field exist
   if (Array.isArray(p.posts)) p.posts = p.posts.map((x) => ({ ...x, categoryId: x.categoryId ?? null, notes: x.notes ?? '' }))
   if (Array.isArray(p.calendar)) p.calendar = p.calendar.map((x) => ({ ...x, categoryId: x.categoryId ?? null }))
+
+  // v3: single platform -> platforms array on posts + calendar; editable day numbers on posts + stories
+  const germ = s.germinationDate || null
+  const toArr = (x) => {
+    if (Array.isArray(x.platforms)) return x.platforms
+    if (x.platform) return [x.platform]
+    return []
+  }
+  if (Array.isArray(p.posts)) {
+    p.posts = p.posts.map((x) => {
+      const { platform, ...rest } = x
+      return { ...rest, platforms: toArr(x), day: x.day ?? (growDay(germ, x.date) ?? '') }
+    })
+  }
+  if (Array.isArray(p.calendar)) {
+    p.calendar = p.calendar.map((x) => {
+      const { platform, ...rest } = x
+      return { ...rest, platforms: toArr(x) }
+    })
+  }
+  if (Array.isArray(p.stories)) {
+    p.stories = p.stories.map((x) => ({ ...x, day: x.day ?? (growDay(germ, x.date) ?? '') }))
+  }
 
   p.schemaVersion = SCHEMA_VERSION
   return p

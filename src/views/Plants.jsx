@@ -18,21 +18,32 @@ export default function Plants() {
   const blank = () => ({ strain: '', growType: 'photoperiod', color: SWATCHES[0], info: strainInfoFor(''), infoManual: false })
   const [form, setForm] = useState(blank())
 
-  const open = (plant) => { if (plant) { setForm({ ...plant }); setEditing(plant) } else { setForm(blank()); setEditing('new') } }
+  const open = (plant) => {
+    if (plant) {
+      setForm({ ...plant, effectsText: (plant.info?.effects || []).join(', '), flavorsText: (plant.info?.flavors || []).join(', ') })
+      setEditing(plant)
+    } else { setForm({ ...blank(), effectsText: '', flavorsText: '' }); setEditing('new') }
+  }
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+  const parseList = (t) => t.split(',').map((x) => x.trim()).filter(Boolean)
+  // Bind the list inputs to raw text so spaces/commas type normally; parse alongside.
+  const setEffects = (t) => setForm((f) => ({ ...f, effectsText: t, info: { ...f.info, effects: parseList(t) } }))
+  const setFlavors = (t) => setForm((f) => ({ ...f, flavorsText: t, info: { ...f.info, flavors: parseList(t) } }))
 
   // When the strain name changes, auto-fill info from the DB unless manually overridden.
   const onStrainChange = (val) => {
     setForm((f) => {
       if (f.infoManual) return { ...f, strain: val }
-      return { ...f, strain: val, info: strainInfoFor(val) }
+      const info = strainInfoFor(val)
+      return { ...f, strain: val, info, effectsText: (info.effects || []).join(', '), flavorsText: (info.flavors || []).join(', ') }
     })
   }
 
   const save = () => {
     if (!form.strain.trim()) return
-    if (editing === 'new') addItem('plants', { ...makePlant(form.strain, form.growType, form.color), info: form.info, infoManual: form.infoManual })
-    else updateItem('plants', editing.id, form)
+    const { effectsText, flavorsText, ...clean } = form
+    if (editing === 'new') addItem('plants', { ...makePlant(clean.strain, clean.growType, clean.color), info: clean.info, infoManual: clean.infoManual })
+    else updateItem('plants', editing.id, clean)
     setEditing(null)
   }
 
@@ -154,8 +165,8 @@ export default function Plants() {
             <div className="form-grid">
               <Field label="Type"><input className="input" value={form.info.type || ''} onChange={(e) => set('info', { ...form.info, type: e.target.value, source: 'manual' })} placeholder="hybrid / indica / sativa" /></Field>
               <Field label="THC"><input className="input" value={form.info.thc || ''} onChange={(e) => set('info', { ...form.info, thc: e.target.value })} placeholder="18–25%" /></Field>
-              <div className="full"><Field label="Effects (comma separated)"><input className="input" value={(form.info.effects || []).join(', ')} onChange={(e) => set('info', { ...form.info, effects: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) })} /></Field></div>
-              <div className="full"><Field label="Taste (comma separated)"><input className="input" value={(form.info.flavors || []).join(', ')} onChange={(e) => set('info', { ...form.info, flavors: e.target.value.split(',').map((x) => x.trim()).filter(Boolean) })} /></Field></div>
+              <div className="full"><Field label="Effects (comma separated)"><input className="input" value={form.effectsText ?? ''} onChange={(e) => setEffects(e.target.value)} placeholder="relaxed, giggly, creative" /></Field></div>
+              <div className="full"><Field label="Taste (comma separated)"><input className="input" value={form.flavorsText ?? ''} onChange={(e) => setFlavors(e.target.value)} placeholder="earthy, citrus, sweet" /></Field></div>
               <div className="full"><Field label="Lineage / cross"><input className="input" value={form.info.lineage || ''} onChange={(e) => set('info', { ...form.info, lineage: e.target.value })} /></Field></div>
               <div className="full"><Field label="Blurb"><textarea className="textarea" value={form.info.blurb || ''} onChange={(e) => set('info', { ...form.info, blurb: e.target.value })} /></Field></div>
             </div>

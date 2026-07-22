@@ -1,7 +1,7 @@
 import { uid } from '../lib/id.js'
 import { lookupStrain } from '../lib/strains.js'
 
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 export const PLATFORMS = ['instagram', 'tiktok', 'youtube']
 export const PLATFORM_LABEL = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YT Shorts' }
 
@@ -146,23 +146,30 @@ export function seedBudBalcony() {
   ]
 
   p.posts = [
-    { id: uid('po_'), date: '2026-05-14', platform: 'instagram', hook: 'Day 1: the seeds are in', categoryId: catId('Weed Update'), status: 'posted', views: 4200, likes: 380, saves: 210, shares: 64, comments: 22, notes: 'Strong hook, unboxing energy.' },
-    { id: uid('po_'), date: '2026-06-21', platform: 'instagram', hook: 'Transplant day into 5 gallon pots', categoryId: catId('Weed Update'), status: 'posted', views: 3100, likes: 240, saves: 130, shares: 28, comments: 15, notes: '' },
-    { id: uid('po_'), date: '2026-07-06', platform: 'tiktok', hook: 'Autoflower vs photoperiod in 30 seconds', categoryId: catId('Educational'), status: 'posted', views: 8800, likes: 610, saves: 540, shares: 120, comments: 41, notes: 'Best performer so far. Saves are high.' },
-    { id: uid('po_'), date: '2026-07-16', platform: 'instagram', hook: 'White Widow is flowering first', categoryId: catId('Weed Update'), status: 'editing', views: '', likes: '', saves: '', shares: '', comments: '', notes: 'Waiting on b-roll.' },
+    { id: uid('po_'), date: '2026-05-14', day: 2, platforms: ['instagram'], hook: 'Day 1: the seeds are in', categoryId: catId('Weed Update'), status: 'posted', views: 4200, likes: 380, saves: 210, shares: 64, comments: 22, notes: 'Strong hook, unboxing energy.' },
+    { id: uid('po_'), date: '2026-06-21', day: 40, platforms: ['instagram'], hook: 'Transplant day into 5 gallon pots', categoryId: catId('Weed Update'), status: 'posted', views: 3100, likes: 240, saves: 130, shares: 28, comments: 15, notes: '' },
+    { id: uid('po_'), date: '2026-07-06', day: 55, platforms: ['tiktok', 'instagram'], hook: 'Autoflower vs photoperiod in 30 seconds', categoryId: catId('Educational'), status: 'posted', views: 8800, likes: 610, saves: 540, shares: 120, comments: 41, notes: 'Best performer so far. Saves are high.' },
+    { id: uid('po_'), date: '2026-07-16', day: 65, platforms: ['instagram'], hook: 'White Widow is flowering first', categoryId: catId('Weed Update'), status: 'editing', views: '', likes: '', saves: '', shares: '', comments: '', notes: 'Waiting on b-roll.' },
+  ]
+
+  p.followers = [
+    { id: uid('f_'), date: '2026-06-21', counts: { instagram: 210, tiktok: 90, youtube: 0 } },
+    { id: uid('f_'), date: '2026-06-28', counts: { instagram: 260, tiktok: 150, youtube: 0 } },
+    { id: uid('f_'), date: '2026-07-05', counts: { instagram: 340, tiktok: 310, youtube: 12 } },
+    { id: uid('f_'), date: '2026-07-12', counts: { instagram: 415, tiktok: 520, youtube: 18 } },
   ]
 
   p.stories = [
-    { id: uid('s_'), date: '2026-07-12', morningShot: true, closeUp: true, audience: true, note: 'Poll: which strain will flower first?' },
-    { id: uid('s_'), date: '2026-07-11', morningShot: true, closeUp: true, audience: false, note: 'Used the lofi timelapse audio.' },
-    { id: uid('s_'), date: '2026-07-10', morningShot: true, closeUp: false, audience: false, note: '' },
+    { id: uid('s_'), date: '2026-07-12', day: 61, morningShot: true, closeUp: true, audience: true, note: 'Poll: which strain will flower first?' },
+    { id: uid('s_'), date: '2026-07-11', day: 60, morningShot: true, closeUp: true, audience: false, note: 'Used the lofi timelapse audio.' },
+    { id: uid('s_'), date: '2026-07-10', day: 59, morningShot: true, closeUp: false, audience: false, note: '' },
   ]
 
   p.calendar = [
-    { id: uid('c_'), date: '2026-07-14', title: 'Weekly recap reel', categoryId: catId('Recap'), platform: 'instagram', notes: 'Seed to sprout timelapse.', done: false },
-    { id: uid('c_'), date: '2026-07-16', title: 'White Widow flower close-up', categoryId: catId('Weed Update'), platform: 'instagram', notes: '', done: false },
-    { id: uid('c_'), date: '2026-07-17', title: 'Passive B-roll: morning watering', categoryId: catId('Passive Reel'), platform: 'tiktok', notes: '', done: false },
-    { id: uid('c_'), date: '2026-07-19', title: 'Strain differences explainer', categoryId: catId('Educational'), platform: 'youtube', notes: '360 cam.', done: false },
+    { id: uid('c_'), date: '2026-07-14', title: 'Weekly recap reel', categoryId: catId('Recap'), platforms: ['instagram'], notes: 'Seed to sprout timelapse.', done: false },
+    { id: uid('c_'), date: '2026-07-16', title: 'White Widow flower close-up', categoryId: catId('Weed Update'), platforms: ['instagram'], notes: '', done: false },
+    { id: uid('c_'), date: '2026-07-17', title: 'Passive B-roll: morning watering', categoryId: catId('Passive Reel'), platforms: ['tiktok', 'instagram'], notes: '', done: false },
+    { id: uid('c_'), date: '2026-07-19', title: 'Strain differences explainer', categoryId: catId('Educational'), platforms: ['youtube'], notes: '360 cam.', done: false },
   ]
 
   return p

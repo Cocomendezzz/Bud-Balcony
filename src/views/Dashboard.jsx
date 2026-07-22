@@ -41,9 +41,11 @@ export default function Dashboard({ setView }) {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)
       const iso = toISO(d)
-      return { iso, dow: DOW[d.getDay()], day: d.getDate(), gd: growDay(s.germinationDate, iso), events: (project.calendar || []).filter((e) => e.date === iso) }
+      const cal = (project.calendar || []).filter((e) => e.date === iso)
+      const posts = (project.posts || []).filter((po) => po.date === iso).map((po) => ({ id: `po_${po.id}`, title: po.hook || 'Untitled post', categoryId: po.categoryId }))
+      return { iso, dow: DOW[d.getDay()], day: d.getDate(), gd: growDay(s.germinationDate, iso), events: [...cal, ...posts] }
     })
-  }, [today, project.calendar, s.germinationDate])
+  }, [today, project.calendar, project.posts, s.germinationDate])
 
   // latest logged stage per plant, for a quick behind/ahead read
   const latestStage = (plantId) => {
@@ -156,25 +158,36 @@ export default function Dashboard({ setView }) {
         </div>
       </div>
 
-      {/* Follower growth (manual) */}
+      {/* Follower growth (manual), one chart per platform */}
       <div className="card" style={{ padding: 18 }}>
         <div className="section-head">
           <h3>Follower growth</h3>
           <button className="btn btn-sm btn-leaf" onClick={() => { setForm({ date: today, counts: Object.fromEntries(platforms.map((p) => [p, latest?.counts?.[p] ?? ''])) }); setLogOpen(true) }}><Icon.plus width={14} /> Log followers</button>
         </div>
-        <LineChart series={series} />
-        {latest ? (
-          <div className="row wrap" style={{ gap: 14, marginTop: 12 }}>
-            {platforms.map((p) => (
-              <div key={p} className="row" style={{ alignItems: 'center', gap: 7 }}>
-                <span className="dot" style={{ background: colorFor(p) }} />
-                <span style={{ fontSize: 13 }}>{PLATFORM_LABEL[p]}</span>
-                <span className="mono" style={{ fontSize: 13, fontWeight: 600 }}>{(latest.counts?.[p] || 0).toLocaleString()}</span>
+        <div className="pf-charts">
+          {platforms.map((p) => {
+            const pSeries = followers.map((f) => ({ x: f.date, y: Number(f.counts?.[p]) || 0 }))
+            const cur = latest ? Number(latest.counts?.[p]) || 0 : 0
+            const prevRec = followers.length > 1 ? followers[followers.length - 2] : null
+            const d = prevRec != null ? cur - (Number(prevRec.counts?.[p]) || 0) : null
+            return (
+              <div key={p} className="pf-chart">
+                <div className="between" style={{ marginBottom: 6 }}>
+                  <span className="row" style={{ alignItems: 'center', gap: 7 }}>
+                    <span className="dot" style={{ background: colorFor(p) }} />
+                    <strong style={{ fontSize: 13.5 }}>{PLATFORM_LABEL[p]}</strong>
+                  </span>
+                  <span className="mono" style={{ fontSize: 13, fontWeight: 600 }}>
+                    {cur.toLocaleString()}
+                    {d != null && <span style={{ color: d >= 0 ? 'var(--leaf)' : 'var(--danger)', marginLeft: 8, fontWeight: 500 }}>{d >= 0 ? '+' : ''}{d.toLocaleString()}</span>}
+                  </span>
+                </div>
+                <LineChart series={pSeries} height={120} color={colorFor(p)} />
               </div>
-            ))}
-          </div>
-        ) : null}
-        <p style={{ margin: '12px 0 0', fontSize: 12.5, color: 'var(--muted)' }}>Entered by hand. Connecting Instagram directly isn't possible in a no-login app like this, so Sunday check-ins keep the line moving.</p>
+            )
+          })}
+        </div>
+        <p style={{ margin: '12px 0 0', fontSize: 12.5, color: 'var(--muted)' }}>Entered by hand. Connecting accounts directly isn't possible in a no-login app like this, so Sunday check-ins keep the lines moving.</p>
       </div>
 
       {logOpen && (

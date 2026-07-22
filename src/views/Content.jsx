@@ -3,9 +3,17 @@ import { useStore } from '../store/ProjectContext.jsx'
 import { Icon } from '../components/Icons.jsx'
 import { POST_STATUS, PLATFORM_LABEL } from '../store/defaults.js'
 import { CategorySelect, categoryById } from '../components/Category.jsx'
-import { todayISO, fmtShort, growDay } from '../lib/date.js'
-import { tint } from '../lib/color.js'
+import { todayISO, toISO, fromISO, growDay } from '../lib/date.js'
 import { uid } from '../lib/id.js'
+
+const PLATFORM_SHORT = { instagram: 'IG', tiktok: 'TT', youtube: 'YT' }
+
+function nextDate(iso) {
+  const d = fromISO(iso)
+  if (!d) return todayISO()
+  d.setDate(d.getDate() + 1)
+  return toISO(d)
+}
 
 export default function Content() {
   const { project, addItem, bulkAdd, updateItem, removeItem } = useStore()
@@ -16,13 +24,37 @@ export default function Content() {
   const [pf, setPf] = useState('all')
   const [st, setSt] = useState('all')
 
-  const newRow = () => ({ id: uid('po_'), date: todayISO(), platform: platforms[0] || 'instagram', hook: '', covered: '', categoryId: null, status: 'idea', url: '', views: '', likes: '', saves: '', shares: '', comments: '', notes: '' })
-  const addRow = () => addItem('posts', newRow(), { prepend: true })
-  const addTen = () => bulkAdd('posts', Array.from({ length: 10 }, () => ({ ...newRow(), hook: '' })), { prepend: true })
+  const autoDay = (date) => growDay(germ, date) ?? ''
+
+  // New rows land at the bottom, dated one day after the last row (unless you change it).
+  const newRow = (date) => ({ id: uid('po_'), date, day: autoDay(date), platforms: platforms.slice(0, 1), hook: '', categoryId: null, status: 'idea', url: '', views: '', likes: '', saves: '', shares: '', comments: '', notes: '' })
+  const lastDate = () => {
+    const list = project.posts || []
+    return list.length ? list[list.length - 1].date : null
+  }
+  const addRow = () => {
+    const base = lastDate()
+    addItem('posts', newRow(base ? nextDate(base) : todayISO()))
+  }
+  const addTen = () => {
+    let d = lastDate()
+    const rows = Array.from({ length: 10 }, () => {
+      d = d ? nextDate(d) : todayISO()
+      return newRow(d)
+    })
+    bulkAdd('posts', rows)
+  }
+
+  // Changing the date recalculates the day number; you can still type over the day after.
+  const setDate = (id, date) => updateItem('posts', id, { date, day: autoDay(date) })
+  const togglePlatform = (post, p) => {
+    const has = (post.platforms || []).includes(p)
+    updateItem('posts', post.id, { platforms: has ? post.platforms.filter((x) => x !== p) : [...(post.platforms || []), p] })
+  }
 
   const rows = useMemo(() => {
     let list = [...(project.posts || [])]
-    if (pf !== 'all') list = list.filter((p) => p.platform === pf)
+    if (pf !== 'all') list = list.filter((p) => (p.platforms || []).includes(pf))
     if (st !== 'all') list = list.filter((p) => p.status === st)
     return list
   }, [project.posts, pf, st])
@@ -40,7 +72,7 @@ export default function Content() {
       <div className="page-head between">
         <div>
           <h1>Content</h1>
-          <div className="desc">Edit any cell directly, like a spreadsheet. Plan ahead with placeholder rows.</div>
+          <div className="desc">Edit any cell directly. Dated posts show up on the Calendar automatically.</div>
         </div>
         <div className="row" style={{ gap: 8 }}>
           <button className="btn" onClick={addTen}>+ 10 rows</button>
@@ -73,25 +105,27 @@ export default function Content() {
           <table className="table sheet">
             <thead>
               <tr>
-                <th style={{ minWidth: 130 }}>Date</th><th>Day</th><th style={{ minWidth: 200 }}>Hook</th>
-                <th style={{ minWidth: 130 }}>Category</th><th style={{ minWidth: 120 }}>Platform</th><th style={{ minWidth: 120 }}>Status</th>
+                <th style={{ minWidth: 130 }}>Date</th><th style={{ width: 64 }}>Day</th><th style={{ minWidth: 200 }}>Hook</th>
+                <th style={{ minWidth: 130 }}>Category</th><th style={{ minWidth: 118 }}>Platforms</th><th style={{ minWidth: 110 }}>Status</th>
                 <th>Views</th><th>Saves</th><th>Shares</th><th style={{ minWidth: 180 }}>Notes</th><th></th>
               </tr>
             </thead>
             <tbody>
               {rows.map((p) => {
-                const d = growDay(germ, p.date)
                 const cat = categoryById(categories, p.categoryId)
                 return (
                   <tr key={p.id} style={cat ? { boxShadow: `inset 3px 0 0 ${cat.color}` } : undefined}>
-                    <td><input type="date" className="cell" value={p.date} onChange={(e) => upd(p.id, { date: e.target.value })} /></td>
-                    <td className="num">{d ? `D${d}` : '—'}</td>
+                    <td><input type="date" className="cell" value={p.date} onChange={(e) => setDate(p.id, e.target.value)} /></td>
+                    <td><input type="number" className="cell num" value={p.day ?? ''} placeholder="—" onChange={(e) => upd(p.id, { day: e.target.value === '' ? '' : Number(e.target.value) })} /></td>
                     <td><input className="cell" value={p.hook} placeholder="Untitled" onChange={(e) => upd(p.id, { hook: e.target.value })} /></td>
                     <td><CategorySelect className="cell" categories={categories} value={p.categoryId} onChange={(v) => upd(p.id, { categoryId: v })} /></td>
                     <td>
-                      <select className="cell" value={p.platform} onChange={(e) => upd(p.id, { platform: e.target.value })}>
-                        {platforms.map((x) => <option key={x} value={x}>{PLATFORM_LABEL[x]}</option>)}
-                      </select>
+                      <div className="pf-toggles">
+                        {platforms.map((x) => {
+                          const on = (p.platforms || []).includes(x)
+                          return <button key={x} className={`pf-chip ${on ? 'on' : ''}`} title={PLATFORM_LABEL[x]} onClick={() => togglePlatform(p, x)}>{PLATFORM_SHORT[x] || x.slice(0, 2).toUpperCase()}</button>
+                        })}
+                      </div>
                     </td>
                     <td>
                       <select className={`cell status-cell ${p.status}`} value={p.status} onChange={(e) => upd(p.id, { status: e.target.value })}>
