@@ -516,3 +516,17 @@ select.cell { cursor: pointer; -webkit-appearance: none; appearance: none; }
 .pf-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
 .pf-chart { min-width: 0; }
 @media (max-width: 860px) { .pf-charts { grid-template-columns: 1fr; } }
+
+/* V3.1: Content sheet fits its container, no horizontal scroll */
+.sheet.fit { table-layout: fixed; width: 100%; }
+.sheet.fit td, .sheet.fit th { overflow: hidden; }
+.sheet .cell { min-width: 0; }
+.sheet .ctr, .cell.ctr { text-align: center; }
+.sheet th.ctr { text-align: center; }
+.sheet.fit .pf-toggles { justify-content: flex-start; flex-wrap: nowrap; }
+.sheet.fit .pf-chip { padding: 4px 5px; }
+/* kill native number spinners everywhere in sheets (arrows were covering values) */
+.sheet input[type="number"]::-webkit-outer-spin-button,
+.sheet input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.sheet input[type="number"] { -moz-appearance: textfield; }
+.sheet.fit input[type="date"] { min-width: 0; }

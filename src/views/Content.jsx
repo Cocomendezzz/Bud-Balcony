@@ -101,13 +101,19 @@ export default function Content() {
       {rows.length === 0 ? (
         <div className="empty"><h4>No posts here yet</h4><p>Add a post or drop in ten placeholder rows to plan the month.</p></div>
       ) : (
-        <div className="card table-scroll">
-          <table className="table sheet">
+        <div className="card">
+          <table className="table sheet fit">
+            <colgroup>
+              <col style={{ width: '10%' }} /><col style={{ width: '5%' }} /><col style={{ width: '19%' }} />
+              <col style={{ width: '12%' }} /><col style={{ width: '9%' }} /><col style={{ width: '10%' }} />
+              <col style={{ width: '6%' }} /><col style={{ width: '6%' }} /><col style={{ width: '6%' }} />
+              <col style={{ width: '13%' }} /><col style={{ width: '4%' }} />
+            </colgroup>
             <thead>
               <tr>
-                <th style={{ minWidth: 130 }}>Date</th><th style={{ width: 64 }}>Day</th><th style={{ minWidth: 200 }}>Hook</th>
-                <th style={{ minWidth: 130 }}>Category</th><th style={{ minWidth: 118 }}>Platforms</th><th style={{ minWidth: 110 }}>Status</th>
-                <th>Views</th><th>Saves</th><th>Shares</th><th style={{ minWidth: 180 }}>Notes</th><th></th>
+                <th>Date</th><th className="ctr">Day</th><th>Hook</th>
+                <th>Category</th><th>Platforms</th><th>Status</th>
+                <th className="ctr">Views</th><th className="ctr">Saves</th><th className="ctr">Shares</th><th>Notes</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -116,7 +122,7 @@ export default function Content() {
                 return (
                   <tr key={p.id} style={cat ? { boxShadow: `inset 3px 0 0 ${cat.color}` } : undefined}>
                     <td><input type="date" className="cell" value={p.date} onChange={(e) => setDate(p.id, e.target.value)} /></td>
-                    <td><input type="number" className="cell num" value={p.day ?? ''} placeholder="—" onChange={(e) => upd(p.id, { day: e.target.value === '' ? '' : Number(e.target.value) })} /></td>
+                    <td><input inputMode="numeric" className="cell num ctr" value={p.day ?? ''} placeholder="—" onChange={(e) => upd(p.id, { day: e.target.value.replace(/[^0-9]/g, '') === '' ? '' : Number(e.target.value.replace(/[^0-9]/g, '')) })} /></td>
                     <td><input className="cell" value={p.hook} placeholder="Untitled" onChange={(e) => upd(p.id, { hook: e.target.value })} /></td>
                     <td><CategorySelect className="cell" categories={categories} value={p.categoryId} onChange={(v) => upd(p.id, { categoryId: v })} /></td>
                     <td>
@@ -132,9 +138,9 @@ export default function Content() {
                         {POST_STATUS.map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </td>
-                    <td><input type="number" className="cell num" value={p.views} onChange={(e) => upd(p.id, { views: e.target.value })} /></td>
-                    <td><input type="number" className="cell num" value={p.saves} onChange={(e) => upd(p.id, { saves: e.target.value })} /></td>
-                    <td><input type="number" className="cell num" value={p.shares} onChange={(e) => upd(p.id, { shares: e.target.value })} /></td>
+                    <td><input inputMode="numeric" className="cell num ctr" value={p.views} placeholder="—" onChange={(e) => upd(p.id, { views: e.target.value.replace(/[^0-9]/g, '') })} /></td>
+                    <td><input inputMode="numeric" className="cell num ctr" value={p.saves} placeholder="—" onChange={(e) => upd(p.id, { saves: e.target.value.replace(/[^0-9]/g, '') })} /></td>
+                    <td><input inputMode="numeric" className="cell num ctr" value={p.shares} placeholder="—" onChange={(e) => upd(p.id, { shares: e.target.value.replace(/[^0-9]/g, '') })} /></td>
                     <td><input className="cell" value={p.notes} placeholder="—" onChange={(e) => upd(p.id, { notes: e.target.value })} /></td>
                     <td><button className="icon-btn" onClick={() => removeItem('posts', p.id)} aria-label="Delete"><Icon.trash width={15} /></button></td>
                   </tr>
